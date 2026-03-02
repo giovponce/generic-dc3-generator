@@ -2,6 +2,8 @@
 
 A small web app to generate **DC3** Word documents (`.docx`) from course/company data plus a list of workers. The frontend is **React + TypeScript (Vite)** and the backend is a tiny **Express** server using **Docxtemplater**.
 
+The DC3 Generator can be accessed [here](https://generic-dc3-generator.onrender.com) at https://generic-dc3-generator.onrender.com.
+
 ## What it does
 
 - Fill course + company + signatures data in the UI.
