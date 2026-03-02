@@ -1,126 +1,127 @@
-# React + TypeScript + Vite
+# DC3 Generator (React + Vite + Express)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small web app to generate **DC3** Word documents (`.docx`) from course/company data plus a list of workers. The frontend is **React + TypeScript (Vite)** and the backend is a tiny **Express** server using **Docxtemplater**.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Fill course + company + signatures data in the UI.
+- Add workers manually or **bulk import** by pasting a tab-separated table (TSV).
+- Validates **CURP length (18)** and **RFC length (12 or 13)** in the UI.
+- Click **Generar DC3** to download a generated `.docx`.
 
-## React Compiler
+## Project structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: `src/` (React + TS)
+  - UI sections live in `src/components/`
+- **Backend**: `server/server.cjs` (Express)
+  - Template file: `server/templates/template.docx`
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Node.js 18+**
+- npm
 
-```js
-export default defineConfig([
-  # DC3 Generator
+## Install
 
-  A small tool to create DC3 Word documents from a React + TypeScript frontend and a tiny Express server that uses Docxtemplater.
+From the project root:
 
-  # DC3 Generator
+```bash
+npm install
+```
 
-  A small tool to create DC3 Word documents from a React + TypeScript frontend and a tiny Express server that uses Docxtemplater.
+## Run in development (recommended)
 
-  Structure
-  - Frontend: React + TypeScript + Vite (source in `src/`).
-  - Server: Express in `server/server.cjs` that reads `server/template.docx` and returns a generated `.docx`.
+You’ll run **two processes**: the Express API and the Vite dev server.
 
-  Features
-  - Fill a Word template per-worker and download a combined `.docx`.
-  - Bulk paste tab-separated worker rows (Nombre, CURP, Ocupación, Puesto).
-  - Basic server-side validation with helpful 400 response when input is missing.
+### 1) Start the backend API
 
-  Prerequisites
-  - Node.js (16+ recommended)
-  - npm or yarn
+From the project root:
 
-  Getting started
-  1. Install dependencies (root):
+```bash
+node server/server.cjs
+```
 
-  ```bash
-  npm install
-  ```
+The server listens on `http://localhost:3001` by default.
 
-  2. Run the backend server (from the project root):
+### 2) Start the frontend
 
-  ```bash
-  # simple:
-  node server/server.cjs
+In another terminal:
 
-  # or with automatic restart during development (if you have nodemon):
-  npx nodemon server/server.cjs
-  ```
+```bash
+npm run dev
+```
 
-  The server listens on port `3001` by default.
+Open the Vite URL shown in the terminal (usually `http://localhost:5173`).
 
-  3. Run the frontend dev server:
+## Build + run (single server)
 
-  ```bash
-  npm run dev
-  ```
+This builds the frontend into `dist/`, then the Express server serves it as static files.
 
-  Open the Vite dev URL (usually `http://localhost:5173`).
+```bash
+npm run build
+node server/server.cjs
+```
 
-  API
-  - Endpoint: `POST http://localhost:3001/generate`
-  - Expected JSON body:
+Then open `http://localhost:3001`.
 
-  ```json
-  {
-    "shared": {
-      "nombreCurso": "Curso X",
-      "duracionEnHoras": 3,
-      "areaTematica": "Seguridad",
-      "startDate": "01/02/2026",
-      "endDate": "02/02/2026",
-      "nombreRazonSocialEmpresa": "ACME S.A.",
-      "rfc": "ACMERFC123"
-    },
-    "workers": [
-      { "nombre": "Juan Pérez", "curp": "JUAP800101HDFRNN09", "ocupacion": "Operario", "puesto": "Linea 1" }
-    ]
-  }
-  ```
+## Scripts
 
-  - Responses:
-    - `200` with a `.docx` attachment on success.
-    - `400` with message when `shared` or a non-empty `workers` array is missing.
-    - `500` for server/template processing errors.
+- `npm run dev`: start Vite dev server
+- `npm run build`: typecheck + build production frontend
+- `npm run preview`: preview the production build (Vite)
+- `npm run lint`: run ESLint
+- `npm run format`: run Prettier (adds `;` and formats files)
 
-  Frontend usage notes
-  - The UI lets you fill course and company data, add workers manually, or paste a tab-separated table and import rows.
-  - Date inputs are converted to `DD/MM/YYYY` before being sent to the server.
-  - Clicking **Generar DC3** posts to the API and downloads `DC3_multiple.docx`.
+## API
 
-  Troubleshooting
-  - Ensure `server/template.docx` exists and is a valid docx template.
-  - CORS is enabled on the server for the dev setup; if you change ports, update the frontend URL accordingly.
-  - If the server returns 400, check the request payload contains both `shared` and a non-empty `workers` array.
+### `POST /generate`
 
-  Ideas / next improvements
-  - Validate required fields (RFC format, CURP length, dates) and return field-specific errors.
-  - Add an `AbortController` to cancel long requests from the frontend.
-  - Replace `alert` messages with in-UI error banners.
+- **URL**: `http://localhost:3001/generate`
+- **Body**: JSON with `shared` + `workers`
+- **Success**: returns a `.docx` attachment
 
-  License
-  - MIT
+Example:
 
-  ---
-  Generated README for the DC3 generator project.
-  - CORS is enabled on the server for the dev setup; if you change ports, update the frontend URL accordingly.
-  - If the server returns 400, check the request payload contains both `shared` and a non-empty `workers` array.
+```json
+{
+  "shared": {
+    "nombreCurso": "CURSO X",
+    "duracionEnHoras": 3,
+    "areaTematica": "SEGURIDAD",
+    "startDate": "01/02/2026",
+    "endDate": "02/02/2026",
+    "nombreRazonSocialEmpresa": "ACME S.A. DE C.V.",
+    "rfc": "ACME800101XXX",
+    "instructor": "NOMBRE INSTRUCTOR",
+    "patron": "NOMBRE PATRON",
+    "representanteTrabajadores": "NOMBRE REPRESENTANTE"
+  },
+  "workers": [
+    {
+      "nombre": "JUAN PEREZ",
+      "curp": "JUAP800101HDFRNN09",
+      "ocupacion": "OPERARIO",
+      "puesto": "LINEA 1"
+    }
+  ]
+}
+```
 
-  Ideas / next improvements
-  - Validate required fields (RFC format, CURP length, dates) and return field-specific errors.
-  - Add an `AbortController` to cancel long requests from the frontend.
-  - Replace `alert` messages with in-UI error banners.
+Notes:
 
-  License
-  - MIT
+- `startDate` and `endDate` must be in **`DD/MM/YYYY`**.
+- The server expects RFC with **12 or 13 characters** (it pads to 13 for template splitting).
 
-  ---
-  Generated README for the DC3 generator project.
+## Template
+
+The server reads:
+
+- `server/templates/template.docx`
+
+If you replace the template, keep it as a valid `.docx` and ensure the placeholders used by Docxtemplater match what the server sends (the server splits CURP and RFC into per-character fields like `curp1..curp18` and `rfc1..rfc13`).
+
+## Troubleshooting
+
+- **404 Template file not found**: ensure `server/templates/template.docx` exists.
+- **400 Invalid data**: ensure the request contains `shared` and a non-empty `workers` array.
+- **CORS / network issues in dev**: the frontend calls `http://localhost:3001/generate`; ensure the server is running on port 3001.
